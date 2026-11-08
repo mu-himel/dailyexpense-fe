@@ -35,7 +35,8 @@ src/
 │  ├─ ui/                   # Tabs, create-tab modal and shared Icon
 │  └─ layout/header.tsx     # Top navigation
 ├─ lib/
-│  └─ product-service.ts    # Dummy in-memory product service
+│  ├─ api.ts                # Shared API base URL and fetch helpers
+│  └─ product-service.ts    # Product service backed by the REST API
 └─ types/expense.ts         # Expense types and categories
 ```
 
@@ -43,9 +44,13 @@ src/
 
 - Tabs are created per month/year from the **+** button and keep their expense
   grid data while switching tabs.
-- Products are served by `src/lib/product-service.ts`. It is an in-memory dummy
-  service: `listProducts()` returns a paginated list and `createProduct()` adds
-  to the same list. Data resets when the page is reloaded.
-- Replace the product service with API calls when a backend is available.
+- Products are served by `src/lib/product-service.ts`, which calls the REST API
+  through the shared helpers in `src/lib/api.ts`. `listProducts()` fetches a
+  paginated list from `GET /products` (0-based `page`, `size` defaults to 10,
+  optional `name` filter). `createProduct()` is still a local placeholder.
+- Requests are proxied by Next.js from `/api/v1/*` to
+  `http://localhost:5000/api/v1/*` so the browser does not need backend CORS.
+  Set `API_BASE_URL` to change the backend API base, or set
+  `NEXT_PUBLIC_API_BASE_URL` to call another API origin directly.
 - Tailwind CSS v4 is configured through `@import "tailwindcss"` in
   `globals.css` — there is no `tailwind.config` file.

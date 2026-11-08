@@ -16,7 +16,7 @@ export const EXPENSE_TYPES: ExpenseType[] = [
 export type ExpenseItem = {
   id: string;
   /** Selected product ID, kept for future server-side requests. */
-  productId: string | null;
+  productId: string | number | null;
   item: string;
   /** Classification of the expense. */
   expenseType: ExpenseType;
@@ -114,9 +114,13 @@ export default function ExpenseGrid({
   useEffect(() => {
     let cancelled = false;
 
-    listProducts(1, 1000).then((data) => {
-      if (!cancelled) setProducts(data.items);
-    });
+    listProducts(0, 1000)
+      .then((data) => {
+        if (!cancelled) setProducts(data.items);
+      })
+      .catch(() => {
+        if (!cancelled) setProducts([]);
+      });
 
     return () => {
       cancelled = true;

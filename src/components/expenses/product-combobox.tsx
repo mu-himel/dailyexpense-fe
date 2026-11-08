@@ -8,7 +8,7 @@ const MAX_SUGGESTIONS = 8;
 
 type ProductComboboxProps = {
   products: Product[];
-  productId: string | null;
+  productId: string | number | null;
   value: string;
   unitLabel: string;
   onSelect: (product: Product) => void;

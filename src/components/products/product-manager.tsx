@@ -7,14 +7,14 @@ import {
   type ProductPage,
 } from "@/lib/product-service";
 
-const PAGE_SIZE = 8;
+const PAGE_SIZE = 10;
 
 const inputClass =
   "h-10 w-full rounded-lg border border-zinc-300 bg-white px-3 text-sm outline-none transition-colors placeholder:text-zinc-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20";
 
 export default function ProductManager() {
   const [result, setResult] = useState<ProductPage | null>(null);
-  const [page, setPage] = useState(1);
+  const [page, setPage] = useState(0);
   const [name, setName] = useState("");
   const [unit, setUnit] = useState("");
   const [loading, setLoading] = useState(true);
@@ -24,12 +24,20 @@ export default function ProductManager() {
   useEffect(() => {
     let cancelled = false;
 
-    listProducts(page, PAGE_SIZE).then((data) => {
-      if (!cancelled) {
-        setResult(data);
-        setLoading(false);
-      }
-    });
+    listProducts(page, PAGE_SIZE)
+      .then((data) => {
+        if (!cancelled) {
+          setResult(data);
+          setError(null);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setError("Could not load products. Please try again.");
+          setLoading(false);
+        }
+      });
 
     return () => {
       cancelled = true;
@@ -62,12 +70,12 @@ export default function ProductManager() {
       setUnit("");
       setLoading(true);
 
-      if (page === 1) {
-        const data = await listProducts(1, PAGE_SIZE);
+      if (page === 0) {
+        const data = await listProducts(0, PAGE_SIZE);
         setResult(data);
         setLoading(false);
       } else {
-        setPage(1);
+        setPage(0);
       }
     } catch {
       setError("Could not add the product. Please try again.");
@@ -77,8 +85,10 @@ export default function ProductManager() {
     }
   }
 
-  const firstItem = result && result.total > 0 ? (result.page - 1) * PAGE_SIZE + 1 : 0;
-  const lastItem = result ? Math.min(result.page * PAGE_SIZE, result.total) : 0;
+  const firstItem = result && result.total > 0 ? result.page * PAGE_SIZE + 1 : 0;
+  const lastItem = result
+    ? Math.min((result.page + 1) * PAGE_SIZE, result.total)
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -194,7 +204,7 @@ export default function ProductManager() {
                     className="transition-colors hover:bg-zinc-50"
                   >
                     <td className="px-4 py-3 font-mono text-xs text-zinc-500">
-                      {(result.page - 1) * PAGE_SIZE + index + 1}
+                      {result.page * PAGE_SIZE + index + 1}
                     </td>
                     <td className="px-4 py-3 font-medium">{product.name}</td>
                     <td className="px-4 py-3 text-zinc-600">
@@ -216,7 +226,7 @@ export default function ProductManager() {
             <button
               type="button"
               onClick={() => goToPage(page - 1)}
-              disabled={loading || page <= 1}
+              disabled={loading || page <= 0}
               className="h-9 cursor-pointer rounded-lg border border-zinc-300 px-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Previous
@@ -224,7 +234,7 @@ export default function ProductManager() {
 
             {result
               ? Array.from({ length: result.totalPages }, (_, index) => {
-                  const pageNumber = index + 1;
+                  const pageNumber = index;
 
                   return (
                     <button
@@ -241,7 +251,7 @@ export default function ProductManager() {
                           : "border-zinc-300 text-zinc-600 hover:bg-zinc-50"
                       }`}
                     >
-                      {pageNumber}
+                      {pageNumber + 1}
                     </button>
                   );
                 })
@@ -250,7 +260,7 @@ export default function ProductManager() {
             <button
               type="button"
               onClick={() => goToPage(page + 1)}
-              disabled={loading || !result || page >= result.totalPages}
+              disabled={loading || !result || page >= result.totalPages - 1}
               className="h-9 cursor-pointer rounded-lg border border-zinc-300 px-3 text-sm font-medium text-zinc-600 transition-colors hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Next
